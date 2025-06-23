@@ -18,11 +18,42 @@ cron.schedule("*/10 * * * * *", async () => {
     const isNineAM = localNow.hour === 9 && localNow.minute === 0;
     
     if (isBirthday && isNineAM) {
+      const todayUTC = localNow.startOf("day").toUTC();
+    
+      // Cek apakah sudah pernah kirim
+      const alreadySent = await prisma.birthdayLog.findFirst({
+        where: {
+          userId: user.id,
+          date: todayUTC.toJSDate(),
+        },
+      });
+    
+      if (alreadySent) {
+        console.log(`✅ Already processed: ${user.email}`);
+        continue;
+      }
+    
       try {
         await sendBirthdayEmail(user);
+    
+        await prisma.birthdayLog.create({
+          data: {
+            userId: user.id,
+            date: todayUTC.toJSDate(),
+            status: "SENT",
+          },
+        });
       } catch (err) {
-        console.error("Error sending birthday email for", user.email, err);
+        console.error("❌ Failed to send email for", user.email, err);
+    
+        await prisma.birthdayLog.create({
+          data: {
+            userId: user.id,
+            date: todayUTC.toJSDate(),
+            status: "FAILED",
+          },
+        });
       }
-    }
+    }    
   }
 });
