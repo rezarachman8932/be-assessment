@@ -19,3 +19,8 @@ Run the app
 Run unit test
 > npm run test
 
+
+# Env
+Create a new file and name it as ".env". Put the file in the root of the project. Paste the following snippet inside the file:
+> DATABASE_URL="file:./dev.db"
+
